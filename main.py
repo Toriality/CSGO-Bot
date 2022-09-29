@@ -18,8 +18,6 @@ async def track(mode):
     # Loop
     while(True):
         clear_cmd_thread = threading.Thread(target=clear_cmd)
-        _loop = asyncio.get_event_loop()
-
 
         str = stringfy.stringfy()   
         str = spelling.correct_spell(str)
@@ -44,7 +42,6 @@ def clear_cmd():
     global last_cmd
     sleep(10)
     last_cmd = ''
-    print('cabo')
 
 # Calling the function
 asyncio.run(track('normal'))

@@ -4,7 +4,7 @@ async def help():
     """
     Mostra link para comandos
     """
-    await console.write("say Lista de comandos: github.com/Toriality/CSGO-Bot")
+    await console.write("say Lista de comandos: bit.ly/3SApxOR")
 
 async def discord():
     """

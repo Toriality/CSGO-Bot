@@ -13,6 +13,12 @@ def knife(): keyboard.tap('3')
 
 def click(): mouse.click()
 
+def scope(): mouse.right_click()
+
+def reload(): keyboard.tap('r')
+
+def jump(): keyboard.tap(Key.space)
+
 async def stop():
     await console.write("say Pausa para beber agua...")
     ctypes.windll.user32.BlockInput(True)

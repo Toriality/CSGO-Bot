@@ -9,14 +9,14 @@ COMMANDS_LIST = [
     # INFO
     "!HELP", "!DISCORD",
     # AUDIO
-    "!PLAY", "!TEXT", "!TTS", "!CANCEL", "!MEME", "!FAKE", "!TIME",
+    "!PLAY", "!TEXT", "!TTS", "!CANCEL", "!MEME", "!FAKE", "!TIME", "!WEATHER", "!RADIO",
     # CONTROLS
-    "!DROP",  "!KNIFE", "!CLICK", "!DUCK", "!INVERT", "!STOP",
+    "!DROP",  "!KNIFE", "!CLICK", "!DUCK", "!INVERT", "!STOP", "!JUMP", "!SCOPE", "!RELOAD",
     # CHAT
-    "!JOKE",
+    "!JOKE", "!TRIVIA", "!ALLAH", "!PASTE",
     # MISC
     "!KILL", "!BYE",
-    ]
+]
 
 # Command execution
 @async_worker
@@ -35,15 +35,23 @@ async def execute(cmd, fullstr='', mode='normal'):
         case "!MEME": await audio.meme()
         case "!FAKE": await audio.fake()
         case "!TIME": await audio.time()
+        case "!WEATHER": await audio.weather(fullstr)
+        case "!RADIO": await audio.radio(fullstr)
         # CONTROLS
         case "!DROP": controls.drop()
         case "!STOP": await controls.stop()
         case "!CLICK": controls.click()
+        case "!SCOPE": controls.scope()
         case "!KNIFE": controls.knife()
         case "!DUCK": await controls.duck()
         case "!INVERT": await controls.invert()
+        case "!JUMP": controls.jump()
+        case "!RELOAD": controls.reload()
         # CHAT
         case "!JOKE": await chat.joke()
+        case "!TRIVIA": await chat.trivia()
+        case "!ALLAH": await chat.allah()
+        case "!PASTE": await chat.paste()
         # MISC
         case "!BYE": await misc.bye()
         case "!KILL": await misc.kill()
