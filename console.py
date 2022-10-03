@@ -10,6 +10,9 @@ async def write(str):
     Arguments:
         str: string to write
     """
+    keyboard.release(Key.ctrl)
+    keyboard.release(Key.shift)
+    keyboard.release(Key.alt)
     ctypes.windll.user32.BlockInput(True)
     sleep(0.1)
     keyboard.tap("'")

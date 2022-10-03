@@ -7,7 +7,7 @@ import threading
 
 last_cmd = ''
 
-async def track(mode):
+async def track():
     """
     Keep taking pictures of the screen to keep on track of the in-game chat. Run command when tracker finds a string with a command.\n
     Arguments:
@@ -18,22 +18,15 @@ async def track(mode):
     # Loop
     while(True):
         clear_cmd_thread = threading.Thread(target=clear_cmd)
-
         str = stringfy.stringfy()   
         str = spelling.correct_spell(str)
         for command in commands.COMMANDS_LIST:
             if command in str.upper():
-                print('yes')
                 if command != last_cmd:
                     last_cmd = command
-                    task = asyncio.create_task(commands.execute(command, str, mode))
-                    print(asyncio.all_tasks())
+                    task = asyncio.create_task(commands.execute(command, str))
                     await asyncio.gather(task)
                     clear_cmd_thread.start()
-                    
-        # Don't run a infinite loop while playing music
-        if mode == 'music':
-            break
              
 def clear_cmd():
     """
@@ -44,7 +37,7 @@ def clear_cmd():
     last_cmd = ''
 
 # Calling the function
-asyncio.run(track('normal'))
+asyncio.run(track())
 
 
 

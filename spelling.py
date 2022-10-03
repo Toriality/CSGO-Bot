@@ -1,3 +1,4 @@
+from lib2to3.pgen2.token import COMMA
 import re
 from spellchecker import SpellChecker
 from commands import COMMANDS_LIST
@@ -76,6 +77,13 @@ def correct_spell(str, use_spellchecker=False):
     for word in stop: str = str.replace(word, 'STOP')
     for word in joke: str = str.replace(word, 'JOKE')
     for word in bye: str = str.replace(word,'BYE')
+
+    # Used to replace calls like "ldrop" to "!drop"
+    cmd_list = []
+    for cmd in COMMANDS_LIST:
+        cmd_list.append(cmd.split('!')[1])
+    for cmd in cmd_list:
+        re.sub('l{}'.format(cmd), cmd, str, flags=re.I)
 
     return str
 

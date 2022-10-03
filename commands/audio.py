@@ -1,23 +1,13 @@
 import console
 import spelling
-import yt_dlp
 import random
 import os
 import re
-import vlc
 import python_weather
-import keyboard as kb
-from time import sleep
 from datetime import datetime
-from pydub import AudioSegment
-from pygame import mixer, time as pytime, USEREVENT
 from gtts import gTTS
 from youtubesearchpython import VideosSearch
-from pynput.keyboard import Controller
-
-keyboard = Controller()
-instance = vlc.Instance()
-player = instance.media_player_new()
+import musicplayer
 
 TTS_PATH = './csgobot/sound/tts.mp3'
 MUSIC_TEMP_PATH = '../csgobot/sound/tmp.mp3'
@@ -88,25 +78,10 @@ RADIOS = {
     }
 }
 
-
-async def check_audio_playing(is_cancelling=False):
-    if mixer.get_init():
-        if not is_cancelling:
-            await console.write("say ERRO: Canal de audio ocupado. Use !CANCEL")
-        return True
-    if player.get_media() != None:
-        if not is_cancelling:
-            await console.write("say ERRO: Canal de audio ocupado. Use !CANCEL")
-        return True
-    return False
-
-
 async def text(fullstr):
     """
     Converts text to speech, randomly choosing Google's TTS voices/languages.\n
     """
-    if await check_audio_playing(): return
-
     # Split user's name and their message
     #str_tts = fullstr.re().split("!TEXT")[1]
     str_tts = re.split('!text', fullstr,flags=re.I)[1]
@@ -119,33 +94,13 @@ async def text(fullstr):
     except:
         return
     
-    # Call event when music ends
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
-
-    # Mixer config
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(TTS_PATH)
-
-    # Force voicerecord button while TTS is playing
-    keyboard.press('z')
-    kb.block_key('z')
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
-
-    # Quit mixer when music ends
-    mixer.quit()
-
+    musicplayer.start(TTS_PATH, 'text')
+    await musicplayer.record()
+    
 async def tts(fullstr):
     """
     Same as TEXT command, but it also says who made the command.
     """
-    if await check_audio_playing(): return
-
     # Split user's name and their message
     str_tts = re.split('!tts', fullstr,flags=re.I)[1]
     str_user = re.split('!tts', fullstr,flags=re.I)[0].replace(':','')
@@ -158,33 +113,14 @@ async def tts(fullstr):
     except:
         return
     
-    # Call event when music ends
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
+    musicplayer.start(TTS_PATH, 'text')
+    await musicplayer.record()
 
-    # Mixer config
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(TTS_PATH)
-
-    # Force voicerecord button while TTS is playing
-    keyboard.press('z')
-    kb.block_key('z')
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
-
-    # Quit mixer when music ends
-    mixer.quit()
 
 async def play(fullstr):
     """
     Play music from YouTube
     """
-    if await check_audio_playing(): return
-
     # Split username and their music request
     str_music = re.split('!PLAY', fullstr, flags=re.I)[1]
     str_user = re.split('!PLAY', fullstr,flags=re.I)[0].replace(':','')
@@ -205,121 +141,41 @@ async def play(fullstr):
     title = spelling.remove_non_ascii(title)
 
     # Chat announcement
-    await console.write("say {} solicitou a musica {}. Pesquisando...".format(str_user, str_music))
+    await console.write("say {} solicitou a musica: {}".format(str_user, title))
     
-    # Download audio from video
-    ydl_opts = {
-        'outtmpl': MUSIC_TEMP_PATH,
-        'format': 'worstaudio/worst',
-        'fixup': 'never'
-    }
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-    except:
-        await console.write("say ERRO: Erro desconhecido ao baixar a musica")
-        os.remove(MUSIC_TEMP_PATH)
-        return
-    
-    # Ignore if file is too long (>8MB)
-    if os.path.getsize(MUSIC_TEMP_PATH) > 8388608:
-        await console.write("say ERRO: Musica muito longa")
-        os.remove(MUSIC_TEMP_PATH)
-        return
-    
-    # Compress MP3 and delete tmp file
-    AudioSegment.from_file(MUSIC_TEMP_PATH).export(MUSIC_OUTPUT_PATH, format='mp3')
-    os.remove(MUSIC_TEMP_PATH)
+    pafyurl = musicplayer.get_pafy_url(url)
+    musicplayer.start(pafyurl, 'yt')
+    await musicplayer.record()
 
-    # Play audio in VB-Cable
-    await console.write("say Tocando: {};+voicerecord".format(title))
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(MUSIC_OUTPUT_PATH)
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    await console.write("say Fim da musica!;-voicerecord")
-    mixer.quit()
 
 async def cancel():
-    if await check_audio_playing(True):
-        try:
-            mixer.music.stop()
-        except:
-            player.stop()
-            player.set_media(None)
-    else:
+    if musicplayer.stop() == False:
         await console.write("say Nenhuma musica sendo tocada no momento.")
 
 async def meme():
     """
     Play a random meme.
     """
-    if await check_audio_playing(): return
-
     # Load random meme
     meme = random.choice(os.listdir(MEME_PATH))
     
-    # Call event when music ends
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
-
-    # Mixer config
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(MEME_PATH + meme)
-
-    # Force voicerecord button while TTS is playing
-    keyboard.press('z')
-    kb.block_key('z')
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
-
-    # Quit mixer when music ends
-    mixer.quit() 
-
+    musicplayer.start(MEME_PATH + meme, 'text')
+    await musicplayer.record()
+   
 async def fake():
     """
     Play a fake sound.
     """
-    if await check_audio_playing(): return
-
     # Load random meme
     fake = random.choice(os.listdir(FAKE_PATH))
     
-    # Call event when music ends
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
-
-    # Mixer config
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(FAKE_PATH + fake)
-
-    # Force voicerecord button while TTS is playing
-    keyboard.press('z')
-    kb.block_key('z')
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
-
-    # Quit mixer when music ends
-    mixer.quit() 
+    musicplayer.start(FAKE_PATH + fake, 'text')
+    await musicplayer.record()
 
 async def time():
     """
     Say the current time
     """
-    if await check_audio_playing(): return
-
     now = datetime.now().strftime('%H:%M:%S').split(':')
     hours = now[0]
     minutes = now[1]
@@ -328,34 +184,13 @@ async def time():
     tts = gTTS(text="São {} horas, {} minutos e {} segundos".format(hours,minutes,seconds), lang='pt')
     tts.save(TTS_PATH)
 
-    
-    # Call event when music ends
-    MUSIC_END = USEREVENT+1
-    mixer.music.set_endevent(MUSIC_END)
-
-    # Mixer config
-    mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-    mixer.music.load(TTS_PATH)
-
-    # Force voicerecord button while TTS is playing
-    keyboard.press('z')
-    kb.block_key('z')
-    mixer.music.play()
-    while mixer.music.get_busy():
-        pytime.wait(100)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
-
-    # Quit mixer when music ends
-    mixer.quit()
+    musicplayer.start(TTS_PATH, 'text')
+    await musicplayer.record()
 
 async def weather(fullstr):
     """
     Get weather of a place
     """
-    if await check_audio_playing(): return
-
     # Declare the client
     try:
         async with python_weather.Client() as client:
@@ -376,36 +211,16 @@ async def weather(fullstr):
             tts = gTTS(text=str_tts, lang='pt')
             tts.save(TTS_PATH)
 
-            # Call event when music ends
-            MUSIC_END = USEREVENT+1
-            mixer.music.set_endevent(MUSIC_END)
+            musicplayer.start(TTS_PATH, 'text')
+            await musicplayer.record()
 
-            # Mixer config
-            mixer.init(devicename='CABLE Input (VB-Audio Virtual Cable)')
-            mixer.music.load(TTS_PATH)
-
-            # Force voicerecord button while TTS is playing
-            keyboard.press('z')
-            kb.block_key('z')
-            mixer.music.play()
-            while mixer.music.get_busy():
-                pytime.wait(100)
-                continue
-            kb.unblock_key('z')
-            keyboard.release('z')
-
-            # Quit mixer when music ends
-            mixer.quit()
     except Exception as e:
         await console.write("say ERRO: Ocorreu algum erro ao conectar-se com o servidor.")
-        return
 
 async def radio(fullstr):
     """
     Play radio stream
     """
-    if await check_audio_playing(): return
-
     # Get requested id number
     # Split string after !radio
     radio_id = re.split('!radio', fullstr, flags=re.I)[1]
@@ -422,23 +237,8 @@ async def radio(fullstr):
     radio_url = RADIOS[radio_id]['url']
     radio_name = RADIOS[radio_id]['name']
 
-    # Config VLC
-    media = instance.media_new(radio_url)
-    print(radio_url)
-    player.set_media(media)
-    device = b'{0.0.0.00000000}.{7ee6e415-46bf-442f-a002-4ca3b8ea07e8}'
-    player.audio_output_device_set(None, device)
-
     # Chat announce
     await console.write('say Tocando: {}'.format(radio_name))
 
-    # Force voicerecord
-    keyboard.press('z')
-    kb.block_key('z')
-    player.play()
-    sleep(10)
-    while player.is_playing():
-        sleep(1)
-        continue
-    kb.unblock_key('z')
-    keyboard.release('z')
+    musicplayer.start(radio_url, 'radio')
+    await musicplayer.record()

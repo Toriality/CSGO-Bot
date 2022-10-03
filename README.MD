@@ -53,7 +53,7 @@ O programa tem o intuito apenas para entreter, nenhum dos comandos deste program
 *!TRANS2 <texto>-   Traduz texto inglês para portugues
 !TRIVIA         -   Falar uma curiosidade aleatória
 !ALLAH          -   Falar texto gigante em árabe
-!PASTE           -   Colar o ultimo clipboard no chat
+!PASTE          -   Colar o ultimo clipboard no chat
 *!REPEAT        -   Repetir um texto aleatório do chat
 *!MONEY         -   Falar quantidade de dinheiro atual
 

@@ -20,7 +20,7 @@ COMMANDS_LIST = [
 
 # Command execution
 @async_worker
-async def execute(cmd, fullstr='', mode='normal'):
+async def execute(cmd, fullstr=''):
     match cmd:
         # DEBUG
         case "!DEBUG": await debug()

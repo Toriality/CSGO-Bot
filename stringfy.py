@@ -1,6 +1,6 @@
 import pytesseract
 import spelling
-from PIL import ImageGrab
+from PIL import ImageGrab, Image, ImageEnhance
 
 def stringfy(mode='normal'):
     """
@@ -12,9 +12,11 @@ def stringfy(mode='normal'):
     """
     # ImageGrab to capture the screen image in a loop
     # Bbox used to capture specific area 
-    cap = ImageGrab.grab(bbox=(20, 890, 400, 920)).convert('L').resize([2200,200])
+    cap = ImageGrab.grab(bbox=(20, 892, 532, 912)).convert('L').resize([1920,62], Image.LANCZOS)
+    cap.save('./photo.jpg')
     str = pytesseract.image_to_string(cap)
     str = str.replace('\n', '')
+
 
     if mode == 'normal':
         # Correct spelling mistakes
